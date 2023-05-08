@@ -38,37 +38,85 @@ cal_data$end <- paste(cal_data$end, ':00')
 
 cal_data <- cal_data |>
   separate(date, into = c('month', 'day', 'year'), sep = '/' ) |>
-  mutate(time_start = chron(times. = start)) |> #convert start times
-  mutate(time_end = chron(times. = end)) |> # convert end times
-  mutate(use_time = time_end - time_start) |>
+  mutate(time_start = chron(times. = start),
+         time_end = chron(times. = end),
+         use_time = time_end - time_start) |>
   na.omit() 
 ```
 
 
 Since the `name` column contains values entered by all the users, it is a mix of upper and lower case as well
 
+
+# In progess code
+
+
+```{r temp variables}
+temp <- data.frame(name = unique(cal_data$name)) # make a new df of unique name values
+
+
+```
+
 ```{r}
-name.cleaner <- function(x, y) {
-  gsub(x, x, y, ignore.case = TRUE)
+#### This can work by explicit listing all names. Could I make a function to do iterate through this?
+temp_2 <- temp |>
+  mutate(clean_names = ifelse(grepl('ri', name, ignore.case = T), 'Ritz', name),
+         clean_names = ifelse(grepl('we', name, ignore.case = T), 'Wenjuan', name),
+         clean_names = ifelse(grepl('Alex', name, ignore.case = T), 'Alex', name),
+         clean_names = ifelse(grepl('Amandip', name, ignore.case = T), 'Amandip', name),
+         clean_names = ifelse(grepl('Ashley', name, ignore.case = T), 'Ashley', name),
+         clean_names = ifelse(grepl('Clarissa', name, ignore.case = T), 'Clarissa', name),
+         clean_names = ifelse(grepl('Craig', name, ignore.case = T), 'Craig', name),
+         clean_names = ifelse(grepl('Dallas', name, ignore.case = T), 'Dallas', name),
+         clean_names = ifelse(grepl('dejene', name, ignore.case = T), 'Dejene', name), 
+         clean_names = ifelse(grepl('DT', name, ignore.case = T), 'Dejene', name)
+         
+         )
+```
+
+
+
+
+
+
+```{r}
+temp_2 <- data.frame(var1 = unique(temp_2$clean_names)) # test temp_2 to see in unique # dropped
+```
+
+
+
+# Save below
+
+```{r}
+#### THIS WORKS!!! 
+temp_2 <- temp |>
+  mutate(clean_names = ifelse(grepl('ri', name, ignore.case = T), 'Ritz', name))
+```
+
+# Function set up testing
+
+I think I can use a function to iterate through the names rather than list them one by one. Below are code chunk notes for that
+
+```{r make name_df}
+name_df <- data.frame(pattern = c('ri', 'we'),
+                      cleaned = c('Ritz', 'Wenjuan'))
+```
+
+```{r for loop test set up}
+for (x in name_df$pattern) {
+  mutate(temp, clean_names = ifelse(grepl('ri', name, ignore.case = T), 'Ritz', name))
 }
 ```
 
-```{r}
-temp <- data.frame(name = unique(cal_data$name))
+```{r function set up}
+name.cleaner <- function(x, y, z) {
+  for (i in x) {
+    mutate(z, clean_names = ifelse(grepl(x, y, ignore.case = T), y, name))
+  }
+}
 ```
 
-
-
-
-```{r}
-temp_2 <- gsub('Ritz', 'Ritz', temp$name, ignore.case = TRUE)
-
-temp_2 <- unique(temp_2)
+```{r test function}
+temp_2 <- name.cleaner(name_df$pattern, name_df$cleaned)
 ```
-
-
-
-
-
-
 
