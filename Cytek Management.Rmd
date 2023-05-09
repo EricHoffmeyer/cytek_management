@@ -60,18 +60,7 @@ temp <- data.frame(name = unique(cal_data$name)) # make a new df of unique name 
 ```{r}
 #### This can work by explicit listing all names. Could I make a function to do iterate through this?
 temp_2 <- temp |>
-  mutate(clean_names = ifelse(grepl('ri', name, ignore.case = T), 'Ritz', name),
-         clean_names = ifelse(grepl('we', name, ignore.case = T), 'Wenjuan', name),
-         clean_names = ifelse(grepl('Alex', name, ignore.case = T), 'Alex', name),
-         clean_names = ifelse(grepl('Amandip', name, ignore.case = T), 'Amandip', name),
-         clean_names = ifelse(grepl('Ashley', name, ignore.case = T), 'Ashley', name),
-         clean_names = ifelse(grepl('Clarissa', name, ignore.case = T), 'Clarissa', name),
-         clean_names = ifelse(grepl('Craig', name, ignore.case = T), 'Craig', name),
-         clean_names = ifelse(grepl('Dallas', name, ignore.case = T), 'Dallas', name),
-         clean_names = ifelse(grepl('dejene', name, ignore.case = T), 'Dejene', name), 
-         clean_names = ifelse(grepl('DT', name, ignore.case = T), 'Dejene', name)
-         
-         )
+  mutate(clean_names = ifelse(grepl('ri', name, ignore.case = T), 'Ritz', name))
 ```
 
 
@@ -102,11 +91,6 @@ name_df <- data.frame(pattern = c('ri', 'we'),
                       cleaned = c('Ritz', 'Wenjuan'))
 ```
 
-```{r for loop test set up}
-for (x in name_df$pattern) {
-  mutate(temp, clean_names = ifelse(grepl('ri', name, ignore.case = T), 'Ritz', name))
-}
-```
 
 ```{r function set up}
 name.cleaner <- function(x, y, z) {
@@ -116,7 +100,4 @@ name.cleaner <- function(x, y, z) {
 }
 ```
 
-```{r test function}
-temp_2 <- name.cleaner(name_df$pattern, name_df$cleaned)
-```
 
