@@ -53,24 +53,71 @@ Since the `name` column contains values entered by all the users, it is a mix of
 
 ```{r temp variables}
 temp <- data.frame(name = unique(cal_data$name)) # make a new df of unique name values
-
-
 ```
 
 ```{r}
-#### This can work by explicit listing all names. Could I make a function to do iterate through this?
-temp_2 <- temp |>
-  mutate(clean_names = ifelse(grepl('ri', name, ignore.case = T), 'Ritz', name))
+pattern_replacements <- c("Ashley" = "Ashley",
+                          'Jess' = 'Jessica',
+                          'Alex' = 'Alex',
+                          'Laura' = 'Laura',
+                          'Eric' = 'Eric',
+                          'Dejene' = 'Dejene',
+                          'DT' = 'Dejene',
+                          'Dallas' = 'Dallas',
+                          'Elena' = 'Elena',
+                          'Joe' = 'Joe',
+                          'Amandip' = 'Amandip',
+                          'Spencer' = 'Spencer',
+                          'Sunny' = 'Sunny',
+                          'Therese' = 'Therese',
+                          'ri' = 'Ritz',
+                          'we' = 'Wenjuan',
+                          'Kiana' = 'Kiana',
+                          'Clarissa' = 'Clarissa',
+                          'Regan' = 'Regan',
+                          'Craig' = 'Craig',
+                          'Rachel' = 'Rachel',
+                          'Kristen' = 'Kristen',
+                          'Joselyn' = 'Joselyn',
+                          'Cytek' = 'Cytek',
+                          'qc' = 'Cytek',
+                          'warmup' = 'Cytek'
+                          )
 ```
 
+```{r}
+patt <- c("Ashley", 'Jess', 'Alex', 'Laura', 'Eric', 'Dejene', 'DT', 'Dallas', 'Elena', 'Joe', 'Amandip', 'Spencer', 'Sunny', 'Therese', 'ri', 'we', 'Kiana', 'Clarissa', 'Regan', 'Craig', 'Rachel', 'Kristen', 'Joselyn' , 'Cytek', 'qc', 'warmup')
+
+rep <- c("Ashley", 'Jessica', 'Alex', 'Laura', 'Eric', 'Dejene', 'Dejene', 'Dallas', 'Elena', 'Joe', 'Amandip', 'Spencer', 'Sunny', 'Therese', 'Ritz', 'Wenjuan', 'Kiana', 'Clarissa', 'Regan', 'Craig', 'Rachel', 'Kristen', 'Joselyn', 'Cytek', 'Cytek', 'Cytek')
+```
+
+
+
+```{r}
+temp$name <- gsub(pattern = paste(names(pattern_replacements), collapse = "|" ),
+                  replacement = pattern_replacements,
+                  x = temp$name,
+                  ignore.case = T)
+
+temp$name <- str_replace_all(temp$name, regex(patt, ignore_case = T), rep)
+```
+
+
+
+```{r}
+rm(name.cleaner)
+```
 
 
 
 
 
 ```{r}
-temp_2 <- data.frame(var1 = unique(temp_2$clean_names)) # test temp_2 to see in unique # dropped
+temp_2 <- data.frame(var1 = unique(temp$name))
 ```
+
+
+
 
 
 
