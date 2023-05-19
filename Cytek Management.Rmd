@@ -23,13 +23,11 @@ lab_key <- read.csv('lab_key.csv')
 
 # Data wrangling
 
-First I need to tidy this data by separating the date into individual columns.
-
-add :00 to times
-convert times into new column
-create use time column
-remove NA values
- 
+Separate date into month, day, and year.
+Coerce start and end column into time values.
+Create a use_time column by subtracting start time from end time
+Join lab_key to cal_data, adding a lab name column
+Remove NA values
 
 ```{r}
 # Add :00 to all times for conversion
@@ -41,110 +39,26 @@ cal_data <- cal_data |>
   mutate(time_start = chron(times. = start),
          time_end = chron(times. = end),
          use_time = time_end - time_start) |>
-  na.omit() 
-```
-
-
-Since the `name` column contains values entered by all the users, it is a mix of upper and lower case as well
-
-
-# In progess code
-
-
-```{r temp variables}
-temp <- data.frame(name = unique(cal_data$name)) # make a new df of unique name values
+  left_join(lab_key, by = c('name' = 'user')) |>
+  na.omit()
 ```
 
 ```{r}
-pattern_replacements <- c("Ashley" = "Ashley",
-                          'Jess' = 'Jessica',
-                          'Alex' = 'Alex',
-                          'Laura' = 'Laura',
-                          'Eric' = 'Eric',
-                          'Dejene' = 'Dejene',
-                          'DT' = 'Dejene',
-                          'Dallas' = 'Dallas',
-                          'Elena' = 'Elena',
-                          'Joe' = 'Joe',
-                          'Amandip' = 'Amandip',
-                          'Spencer' = 'Spencer',
-                          'Sunny' = 'Sunny',
-                          'Therese' = 'Therese',
-                          'ri' = 'Ritz',
-                          'we' = 'Wenjuan',
-                          'Kiana' = 'Kiana',
-                          'Clarissa' = 'Clarissa',
-                          'Regan' = 'Regan',
-                          'Craig' = 'Craig',
-                          'Rachel' = 'Rachel',
-                          'Kristen' = 'Kristen',
-                          'Joselyn' = 'Joselyn',
-                          'Cytek' = 'Cytek',
-                          'qc' = 'Cytek',
-                          'warmup' = 'Cytek'
-                          )
+cal_data$use_time <- (as.numeric(cal_data$use_time)) * 24
 ```
 
 ```{r}
-patt <- c("Ashley", 'Jess', 'Alex', 'Laura', 'Eric', 'Dejene', 'DT', 'Dallas', 'Elena', 'Joe', 'Amandip', 'Spencer', 'Sunny', 'Therese', 'ri', 'we', 'Kiana', 'Clarissa', 'Regan', 'Craig', 'Rachel', 'Kristen', 'Joselyn' , 'Cytek', 'qc', 'warmup')
-
-rep <- c("Ashley", 'Jessica', 'Alex', 'Laura', 'Eric', 'Dejene', 'Dejene', 'Dallas', 'Elena', 'Joe', 'Amandip', 'Spencer', 'Sunny', 'Therese', 'Ritz', 'Wenjuan', 'Kiana', 'Clarissa', 'Regan', 'Craig', 'Rachel', 'Kristen', 'Joselyn', 'Cytek', 'Cytek', 'Cytek')
+ggplot(cal_data, aes(lab, use_time, color = lab)) +
+  geom_col()
 ```
-
-
 
 ```{r}
-temp$name <- gsub(pattern = paste(names(pattern_replacements), collapse = "|" ),
-                  replacement = pattern_replacements,
-                  x = temp$name,
-                  ignore.case = T)
 
-temp$name <- str_replace_all(temp$name, regex(patt, ignore_case = T), rep)
-```
-
-
-
-```{r}
-rm(name.cleaner)
 ```
 
 
 
 
 
-```{r}
-temp_2 <- data.frame(var1 = unique(temp$name))
-```
-
-
-
-
-
-
-# Save below
-
-```{r}
-#### THIS WORKS!!! 
-temp_2 <- temp |>
-  mutate(clean_names = ifelse(grepl('ri', name, ignore.case = T), 'Ritz', name))
-```
-
-# Function set up testing
-
-I think I can use a function to iterate through the names rather than list them one by one. Below are code chunk notes for that
-
-```{r make name_df}
-name_df <- data.frame(pattern = c('ri', 'we'),
-                      cleaned = c('Ritz', 'Wenjuan'))
-```
-
-
-```{r function set up}
-name.cleaner <- function(x, y, z) {
-  for (i in x) {
-    mutate(z, clean_names = ifelse(grepl(x, y, ignore.case = T), y, name))
-  }
-}
-```
 
 
