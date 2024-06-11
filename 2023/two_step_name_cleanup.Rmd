@@ -1,0 +1,28 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+For formatting all the original, messy name column.
+
+First, make a vector for each name with typos. One vector for each name that has typos. Names with no typos don't need this. The patter in the grepl function must be unique to the name and not shared with any other names.
+
+```{r}
+ritz_alternates <- cal_data |>
+  filter(grepl('z', name, ignore.case = T)) |>
+  select(name) |>
+  unique() |>
+  pull(name)
+
+ritz_alternates
+  
+```
+
+Now to rename them in the original dataframe. This code re-creates the name column and replaced any misspelled Ritz, while keeping the other names constant.
+
+```{r}
+cal_data <- cal_data |>
+  mutate(name = ifelse(name %in% ritz_alternates, 'Ritz', name))
+```
+
