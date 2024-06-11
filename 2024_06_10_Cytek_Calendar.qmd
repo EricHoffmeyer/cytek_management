@@ -1,0 +1,176 @@
+---
+title: "2024_06_10_Cytek_Calendar"
+format: revealjs
+editor: source
+---
+
+The service contract for the Cytek Aurora is due for renewal. It costs approximately $29,000 dollars, and will need to be split amongst the three labs that use the machine. This notebook will read in the google calendar and plot the use of the machine by each lab for reference when splitting up the cost.
+
+# Load Libraries
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(chron)
+library(stringr)
+```
+
+# Read in data
+
+Read in csv files for galender and user/lab key
+
+```{r Read in data}
+cal.data <- read.csv('data/2024_06_10_calendar.csv')
+lab.key <- read.csv('data/2024_06_10_lab_key.csv')
+```
+
+# Data wrangling
+
+```{r}
+cal.data <- cal.data |> 
+  mutate(date = str_split_i(reservation_start, "T", 1),
+         start = str_split_i(reservation_start, "T", 2),
+         start = str_remove(start, "Z"),
+         end = str_split_i(reservation_end, "T", 2),
+         end = str_remove(end, "Z")) |> 
+  # Separate date and use chron() to calculate use time
+  separate(date, into = c('year', 'month', 'day'), sep = '-' ) |>
+  mutate(start = chron(times. = start),
+         end = chron(times. = end),
+         use.time = (end - start) * 24) |> 
+  mutate_at(c("year", "month", "day", "use.time"), as.numeric) |> 
+  filter(use.time > 0) |> 
+  na.omit()
+```
+
+I want to use just the last year, so let's break up the data. Not as easy as you think, since we need the last 6 months of 2023 and the first 6 months of 2024.
+
+```{r}
+cal.23 <- cal.data |> 
+  filter(year == 2023,
+         month >= 6)
+
+cal.24 <- cal.data |> 
+  filter(year == 2024)
+
+recent.cal <- rbind(cal.23, cal.24)
+```
+
+Let's take a look at the users. I will need to add some to the lab key
+
+```{r}
+recent.cal |> 
+  group_by(user) |> 
+  summarise(count = n()) |> 
+  arrange(desc(count))
+```
+First clean up of names with multiple types
+
+```{r}
+Eric <- c("Eric", "ERIC", "Jessica")
+Dallas <- c("dALLAS", "DALLLAS", "Tegan")
+Perpetual <- c("PERPETUAL", "Perpetual", "perpetual")
+Craig <- c("Craig", "Forester")
+Other <- c("LONG CLEAN - Eric", "Eric setup", "Eric data backup pt 1", "Eric - Long Clean", "Long Clean - Eric")
+
+recent.cal <- recent.cal |> 
+  mutate(user = ifelse(user %in% Eric, "Eric", user),
+         user = ifelse(user %in% Dallas, "Dallas", user),
+         user = ifelse(user %in% Perpetual, "Perpetual", user),
+         user = ifelse(user %in% Craig, "Craig", user),
+         user = ifelse(user %in% Other, "Other", user)
+  )
+
+# make a new column that has clean, consistent names
+recent.cal <- recent.cal |> 
+  mutate(clean.names = case_when(str_detect(user, "jua") ~ "Wenjuan",
+                           str_detect(user, "DT") ~ "Dejene",
+                           str_detect(user, "down") ~ "Other",
+                           str_detect(user, "llas") ~ "Dallas",
+                           str_detect(user, "harles") ~ "Charles",
+                           str_detect(user, "ohn") ~ "John",
+                           str_detect(user, "ngie") ~ "Angie",
+                           str_detect(user, "erese") ~ "Therese",
+                           str_detect(user, "encer") ~ "Spencer",
+                           str_detect(user, "chel") ~ "Rachel",
+                           str_detect(user, "selyn") ~ "Joselyn",
+                           str_detect(user, "ruko") ~ "Haruko",
+                           str_detect(user, "lena") ~ "Elena",
+                           str_detect(user, "rnst") ~ "Patricia",
+                           str_detect(user, "cia") ~ "Patricia",
+                           str_detect(user, "TRIC") ~ "Patricia",
+                           str_detect(user, "rick") ~ "Patrick",
+                           str_detect(user, "aek") ~ "KyungTaek",
+                           str_detect(user, "lex") ~ "Alex",
+                           str_detect(user, "Eric") ~ "Eric",
+                           str_detect(user, "Craig") ~ "Craig",
+                           )
+         )
+```
+
+Now the only rows that are left are the warmup/shutdown/maintenace things. We'll call these "other" in the clean names
+
+```{r}
+misc <- recent.cal |> 
+  filter(is.na(clean.names)) |> 
+  pull(user)
+```
+
+
+```{r}
+recent.cal <- recent.cal |> 
+  mutate(user = ifelse(user %in% misc, "Other", user)) |>
+  mutate(clean.names = ifelse(user == "Other", "Other", clean.names))
+```
+
+Let's look at the grouping using the new clean anmes
+
+```{r}
+recent.cal |> 
+  group_by(clean.names) |> 
+  summarise(count = n()) |> 
+  arrange(desc(count))
+```
+
+Let's add the lab names and drop the "Other" category, as it doesn't really help describe use time.
+
+```{r}
+recent.cal <- recent.cal |> 
+  filter(clean.names != "Other") |> 
+  left_join(lab.key, by = c("clean.names" = "user"))
+```
+
+Alright we have all the names cleaned up now.
+
+```{r}
+total.time = sum(recent.cal$use.time)
+
+by.lab <-  recent.cal |>
+  group_by(lab) |>
+  summarize(lab.use = sum(use.time)) |>
+  mutate(total.use = lab.use / total.time * 100,
+         time.label = format(round(total.use, 1), nsmall = 1))
+  
+```
+
+
+```{r}
+ggplot(by.lab, aes(lab, total.use, fill = lab)) +
+  geom_col() +
+  geom_text(aes(label = time.label), vjust = -0.3)
+
+
+ggsave(filename = '2024_06_10_results/cytek.use.plot.png',
+       plot = last_plot(),
+       width = 6,
+       height = 4,
+       units = 'in',
+       dpi = 300)
+
+```
+
+
+
+
+
